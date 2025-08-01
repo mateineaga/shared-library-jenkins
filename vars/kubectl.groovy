@@ -15,7 +15,7 @@ String getReleaseVersion(Map stageParams = [:]) {
 String getPatchJsonResponse(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
-    String resourceType = stageParams.resourceType ?: 'dr'
+    String resourceType = stageParams.resourceType ?: 'deployment'
     String releaseVersion = stageParams.releaseVersion 
 
     return sh( 
