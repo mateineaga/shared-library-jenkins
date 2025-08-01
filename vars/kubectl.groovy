@@ -50,16 +50,6 @@ String getPatchJsonResponse(Map stageParams = [:]) {
     ).trim()
 }
 
-
-
-// env.JSON_RESPONSE = kubectl.getPatchJsonResponse(
-//     namespace: "${SOURCE_NAMESPACE}",
-//     resourceName: "${SERVICE_NAME}",
-//     resourceType: 'deployment'
-//     releaseVersion: "${env.RELEASE_VERSION}"
-// )
-
-
 String getResources(Map params = [:]) {
     String resources = params.resources
     String namespace = params.namespace ?: 'default'
@@ -80,14 +70,6 @@ String filterResourcesByVersion(Map params = [:]) {
         .findAll { it.contains(version) }
         .join('\n')
 }
-
-// env.DEPLOYMENTS=kubectl.getResources(resources: 'deployments', namespace: "${env.TARGET_NAMESPACE}")
-
-// env.FILTERED_DEPLOYMENTS=kubectl.filterResourcesByVersion(resources: "${env.DEPLOYMENTS}", version: "${env.RELEASE_VERSION}")
-
-// env.HPA=kubectl.getResources(resources: 'hpa', namespace: "${env.TARGET_NAMESPACE}")
-
-// env.FILTERED_DEPLOYMENTS=kubectl.filterResourcesByVersion(resources: "${env.DEPLOYMENTS}", version: "${env.RELEASE_VERSION}")
 
 String checkResources(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
@@ -118,9 +100,14 @@ String getSpecificResource(Map stageParams = [:]) {
 void patchUpdateFileJSON(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String options      = stageParams.options      ?: ''
-    String patchJSON    = stageParams.patchJSON    ?: ''
+    String patchFile    = stageParams.patchFile
     String resourceName = stageParams.resourceName
     String resourceType = stageParams.resourceType ?: 'deployment'
+
+    echo "Debug - Namespace: ${namespace}"
+    echo "Debug - Resource Name: ${resourceName}"
+    echo "Debug - Resource Type: ${resourceType}"
+    echo "Debug - Patch JSON: ${patchFile}"
 
     options             = options.replaceAll('(\\r\\n|\\n|\\s\\s)+', ' ')
     sh """
@@ -128,14 +115,7 @@ void patchUpdateFileJSON(Map stageParams = [:]) {
             ${resourceType} \
             ${resourceName} \
             -n ${namespace} \
-            --patch ${patchJSON} \
+            --patch-file ${patchFile} \
             ${options}
     """
 }
-
-// kubectl.patchUpdateFileJSON(
-//     namespace: ${TARGET_NAMESPACE}
-//     patchJSON: ${JSON_RESPONSE}
-//     resourceName: $deployment
-//     resourceType: 'deployment'
-// )
