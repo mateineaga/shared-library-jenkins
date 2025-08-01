@@ -104,11 +104,6 @@ void patchUpdateFileJSON(Map stageParams = [:]) {
     String resourceName = stageParams.resourceName
     String resourceType = stageParams.resourceType ?: 'deployment'
 
-    echo "Debug - Namespace: ${namespace}"
-    echo "Debug - Resource Name: ${resourceName}"
-    echo "Debug - Resource Type: ${resourceType}"
-    echo "Debug - Patch JSON: ${patchFile}"
-
     options             = options.replaceAll('(\\r\\n|\\n|\\s\\s)+', ' ')
     sh """
         kubectl patch \
