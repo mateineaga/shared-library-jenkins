@@ -19,7 +19,7 @@ String getPatchJsonResponse(Map stageParams = [:]) {
     String releaseVersion = stageParams.releaseVersion 
 
     return sh( 
-        script: '''#!/bin/bash
+        script: """#!/bin/bash
         kubectl get ${resourceType} -n ${namespace} ${resourceName}-${releaseVersion} -o=json | 
             jq '{
                 "spec": {
@@ -45,7 +45,7 @@ String getPatchJsonResponse(Map stageParams = [:]) {
                     }
                 }
             }'
-        ''',
+        """,
         returnStdout: true
     ).trim()
 }
@@ -60,18 +60,23 @@ String getPatchJsonResponse(Map stageParams = [:]) {
 // )
 
 
-String getResources(String resources, String namespace) {
+String getResources(Map params = [:]) {
+    String resources = params.resources
+    String namespace = params.namespace ?: 'default'
+    
     return sh( 
-        script: '''
-        kubectl get {resources} -n ${namespace} -o=jsonpath="{range .items[*]}{.metadata.name}{ \\"\\n\\"}"
-        ''',
+        script: """
+            kubectl get ${resources} -n ${namespace} -o=jsonpath="{range .items[*]}{.metadata.name}{\\"\\n\\"}"
+        """,
         returnStdout: true
     ).trim()
 }
 
-String filterResourcesByVersion(String resources, String version) {
-    def resourceList = resources.split('\n')
-    return resourceList
+String filterResourcesByVersion(Map params = [:]) {
+    String resources = params.resources
+    String version = params.version
+    
+    return resources.split('\n')
         .findAll { it.contains(version) }
         .join('\n')
 }
@@ -90,9 +95,9 @@ String checkResources(Map stageParams = [:]) {
     String resourceType = stageParams.resourceType ?: 'deployment'
 
     return sh( 
-        script: '''
+        script: """
         kubectl get {resourceType} {resourceName} -n ${namespace} -o=jsonpath='{.spec.template.spec.containers[0].resources}' | jq '.'
-        ''',
+        """,
         returnStdout: true
     ).trim()
 }
@@ -103,9 +108,9 @@ String getSpecificResource(Map stageParams = [:]) {
     String resourceType = stageParams.resourceType ?: 'hpa'
 
     return sh( 
-        script: '''
+        script: """
         kubectl get {resourceType} {resourceName} -n ${namespace}
-        ''',
+        """,
         returnStdout: true
     ).trim()
 }
