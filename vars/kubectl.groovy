@@ -84,6 +84,32 @@ String filterResourcesByVersion(String resources, String version) {
 
 // env.FILTERED_DEPLOYMENTS=kubectl.filterResourcesByVersion(resources: "${env.DEPLOYMENTS}", version: "${env.RELEASE_VERSION}")
 
+String checkResources(Map stageParams = [:]) {
+    String namespace    = stageParams.namespace    ?: 'default'
+    String resourceName = stageParams.resourceName
+    String resourceType = stageParams.resourceType ?: 'deployment'
+
+    return sh( 
+        script: '''
+        kubectl get {resourceType} {resourceName} -n ${namespace} -o=jsonpath='{.spec.template.spec.containers[0].resources}' | jq '.'
+        ''',
+        returnStdout: true
+    ).trim()
+}
+
+String getSpecificResource(Map stageParams = [:]) {
+    String namespace    = stageParams.namespace    ?: 'default'
+    String resourceName = stageParams.resourceName
+    String resourceType = stageParams.resourceType ?: 'hpa'
+
+    return sh( 
+        script: '''
+        kubectl get {resourceType} {resourceName} -n ${namespace}
+        ''',
+        returnStdout: true
+    ).trim()
+}
+
 void patchUpdateFileJSON(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String options      = stageParams.options      ?: ''
