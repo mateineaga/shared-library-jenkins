@@ -11,6 +11,7 @@ String getReleaseVersion(Map stageParams = [:]) {
     ).trim()
 }
 
+
 String getPatchJsonResponse(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
@@ -49,12 +50,39 @@ String getPatchJsonResponse(Map stageParams = [:]) {
     ).trim()
 }
 
+
+
 // env.JSON_RESPONSE = kubectl.getPatchJsonResponse(
 //     namespace: "${SOURCE_NAMESPACE}",
 //     resourceName: "${SERVICE_NAME}",
 //     resourceType: 'deployment'
 //     releaseVersion: "${env.RELEASE_VERSION}"
 // )
+
+
+String getResources(String resources, String namespace) {
+    return sh( 
+        script: '''
+        kubectl get {resources} -n ${namespace} -o=jsonpath="{range .items[*]}{.metadata.name}{ \\"\\n\\"}"
+        ''',
+        returnStdout: true
+    ).trim()
+}
+
+String filterResourcesByVersion(String resources, String version) {
+    def resourceList = resources.split('\n')
+    return resourceList
+        .findAll { it.contains(version) }
+        .join('\n')
+}
+
+// env.DEPLOYMENTS=kubectl.getResources(resources: 'deployments', namespace: "${env.TARGET_NAMESPACE}")
+
+// env.FILTERED_DEPLOYMENTS=kubectl.filterResourcesByVersion(resources: "${env.DEPLOYMENTS}", version: "${env.RELEASE_VERSION}")
+
+// env.HPA=kubectl.getResources(resources: 'hpa', namespace: "${env.TARGET_NAMESPACE}")
+
+// env.FILTERED_DEPLOYMENTS=kubectl.filterResourcesByVersion(resources: "${env.DEPLOYMENTS}", version: "${env.RELEASE_VERSION}")
 
 void patchUpdateFileJSON(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
