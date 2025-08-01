@@ -96,7 +96,7 @@ String checkResources(Map stageParams = [:]) {
 
     return sh( 
         script: """
-        kubectl get {resourceType} {resourceName} -n ${namespace} -o=jsonpath='{.spec.template.spec.containers[0].resources}' | jq '.'
+        kubectl get ${resourceType} ${resourceName} -n ${namespace} -o=jsonpath='{.spec.template.spec.containers[0].resources}' | jq '.'
         """,
         returnStdout: true
     ).trim()
@@ -109,7 +109,7 @@ String getSpecificResource(Map stageParams = [:]) {
 
     return sh( 
         script: """
-        kubectl get {resourceType} {resourceName} -n ${namespace}
+        kubectl get ${resourceType} ${resourceName} -n ${namespace}
         """,
         returnStdout: true
     ).trim()
