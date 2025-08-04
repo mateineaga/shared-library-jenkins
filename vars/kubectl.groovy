@@ -17,8 +17,9 @@ String getPatchJsonResponse(Map stageParams = [:]) {
     String resourceName = stageParams.resourceName
     String resourceType = stageParams.resourceType ?: 'deployment'
     String releaseVersion = stageParams.releaseVersion 
+    String saveToFile   = stageParams.saveToFile   ?: null 
 
-    return sh( 
+    def jsonResult = sh( 
         script: """#!/bin/bash
         kubectl get ${resourceType} -n ${namespace} ${resourceName}-${releaseVersion} -o=json | 
             jq '{
@@ -48,6 +49,13 @@ String getPatchJsonResponse(Map stageParams = [:]) {
         """,
         returnStdout: true
     ).trim()
+
+    if (saveToFile) {
+        writeFile file: saveToFile, text: jsonResult
+        echo "JSON saved to ${saveToFile}"
+    }
+
+    return jsonResult
 }
 
 String getResources(Map params = [:]) {
@@ -113,4 +121,29 @@ void patchUpdateFileJSON(Map stageParams = [:]) {
             --patch-file ${patchFile} \
             ${options}
     """
+}
+
+String extractResourcesFromBackup(Map stageParams = [:]) {
+    String backupFile = stageParams.backupFile
+    String resourceName = stageParams.resourceName
+    
+    return sh(
+        script: """#!/bin/bash
+        cat ${backupFile} | 
+            jq '{
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "containers": [{
+                                "image": .spec.template.spec.containers[0].image,
+                                "name": .spec.template.spec.containers[0].name,
+                                "resources": .spec.template.spec.containers[0].resources
+                            }]
+                        }
+                    }
+                }
+            }'
+        """,
+        returnStdout: true
+    ).trim()
 }
