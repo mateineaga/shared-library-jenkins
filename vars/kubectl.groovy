@@ -17,7 +17,6 @@ String getPatchJsonResponse(Map stageParams = [:]) {
     String resourceName = stageParams.resourceName
     String resourceType = stageParams.resourceType ?: 'deployment'
     String releaseVersion = stageParams.releaseVersion 
-    String saveToFile   = stageParams.saveToFile   ?: null 
 
     def jsonResult = sh( 
         script: """#!/bin/bash
@@ -49,13 +48,6 @@ String getPatchJsonResponse(Map stageParams = [:]) {
         """,
         returnStdout: true
     ).trim()
-
-    if (saveToFile) {
-        writeFile file: saveToFile, text: jsonResult
-        echo "JSON saved to ${saveToFile}"
-    }
-
-    return jsonResult
 }
 
 String getResources(Map params = [:]) {
