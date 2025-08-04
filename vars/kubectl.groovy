@@ -12,15 +12,14 @@ String getReleaseVersion(Map stageParams = [:]) {
 }
 
 
-String getPatchJsonResponse(Map stageParams = [:]) {
+String getPatchJsonResponseDeployment(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
-    String resourceType = stageParams.resourceType ?: 'deployment'
     String releaseVersion = stageParams.releaseVersion 
 
     def jsonResult = sh( 
         script: """#!/bin/bash
-        kubectl get ${resourceType} -n ${namespace} ${resourceName}-${releaseVersion} -o=json | 
+        kubectl get deployment -n ${namespace} ${resourceName}-${releaseVersion} -o=json | 
             jq '{
                 "spec": {
                     "template": {
@@ -48,6 +47,36 @@ String getPatchJsonResponse(Map stageParams = [:]) {
         """,
         returnStdout: true
     ).trim()
+
+    return jsonResult
+}
+
+String getHPAPatchJsonResponse(Map stageParams = [:]) {
+    String namespace    = stageParams.namespace    ?: 'default'
+    String resourceName = stageParams.resourceName
+    
+    return sh( 
+        script: """
+            kubectl get hpa ${resourceName} -n ${namespace} -o=jsonpath='{.spec}' | \
+            jq '{
+                spec: {
+                    maxReplicas: .maxReplicas,
+                    minReplicas: .minReplicas,
+                    metrics: [{
+                        type: .metrics[0].type,
+                        resource: {
+                            name: .metrics[0].resource.name,
+                            target: {
+                                type: .metrics[0].resource.target.type,
+                                averageUtilization: .metrics[0].resource.target.averageUtilization
+                            }
+                        }
+                    }]
+                }
+            }'
+        """,
+        returnStdout: true
+    ).trim()
 }
 
 String getResources(Map params = [:]) {
@@ -62,7 +91,16 @@ String getResources(Map params = [:]) {
     ).trim()
 }
 
-String filterResourcesByVersion(Map params = [:]) {
+String filterDeploymentsByVersion(Map params = [:]) {
+    String resources = params.resources
+    String version = params.version
+    
+    return resources.split('\n')
+        .findAll { it.contains(version) }
+        .join('\n')
+}
+
+String filterHPAByVersion(Map params = [:]) {
     String resources = params.resources
     String version = params.version
     
