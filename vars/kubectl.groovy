@@ -91,23 +91,15 @@ String getResources(Map params = [:]) {
     ).trim()
 }
 
-String filterDeploymentsByVersion(Map params = [:]) {
+String filterResourcesByIdentifier(Map params = [:]) {
     String resources = params.resources
-    String version = params.version
+    String identifier = params.identifier
     
     return resources.split('\n')
-        .findAll { it.contains(version) }
+        .findAll { it.contains(identifier) }
         .join('\n')
 }
 
-String filterHPAByVersion(Map params = [:]) {
-    String resources = params.resources
-    String version = params.version
-    
-    return resources.split('\n')
-        .findAll { it.contains(version) }
-        .join('\n')
-}
 
 String checkResources(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
