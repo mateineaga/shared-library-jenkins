@@ -61,7 +61,6 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
             jq '{
                 spec: {
                     maxReplicas: .maxReplicas,
-                    minReplicas: .minReplicas,
                     metrics: [{
                         type: .metrics[0].type,
                         resource: {
@@ -71,7 +70,8 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
                                 averageUtilization: .metrics[0].resource.target.averageUtilization
                             }
                         }
-                    }]
+                    }],
+                    minReplicas: .minReplicas
                 }
             }'
         """,
@@ -101,7 +101,7 @@ String filterResourcesByIdentifier(Map params = [:]) {
 }
 
 
-String checkResources(Map stageParams = [:]) {
+String checkResourcesDeployment(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
     String resourceType = stageParams.resourceType ?: 'deployment'
@@ -109,6 +109,19 @@ String checkResources(Map stageParams = [:]) {
     return sh( 
         script: """
         kubectl get ${resourceType} ${resourceName} -n ${namespace} -o=jsonpath='{.spec.template.spec.containers[0].resources}' | jq '.'
+        """,
+        returnStdout: true
+    ).trim()
+}
+
+String checkResourcesHPA(Map stageParams = [:]) {
+    String namespace    = stageParams.namespace    ?: 'default'
+    String resourceName = stageParams.resourceName
+    String resourceType = stageParams.resourceType ?: 'deployment'
+
+    return sh( 
+        script: """
+        kubectl get ${resourceType} ${resourceName} -n ${namespace} -o=jsonpath='{.spec}' | jq '.'
         """,
         returnStdout: true
     ).trim()
@@ -126,6 +139,8 @@ String getSpecificResource(Map stageParams = [:]) {
         returnStdout: true
     ).trim()
 }
+
+
 
 void patchUpdateFileJSON(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
