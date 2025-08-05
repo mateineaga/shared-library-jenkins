@@ -60,18 +60,18 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
             kubectl get hpa ${resourceName} -n ${namespace} -o=jsonpath='{.spec}' | \
             jq '{
                 spec: {
-                    maxReplicas: .maxReplicas,
+                    maxReplicas: .maxReplicas, 
+                    minReplicas: .minReplicas, 
                     metrics: [{
-                        type: .metrics[0].type,
+                        type: .metrics[0].type, 
                         resource: {
-                            name: .metrics[0].resource.name,
+                            name: .metrics[0].resource.name, 
                             target: {
-                                type: .metrics[0].resource.target.type,
+                                type: .metrics[0].resource.target.type, 
                                 averageUtilization: .metrics[0].resource.target.averageUtilization
                             }
                         }
-                    }],
-                    minReplicas: .minReplicas
+                    }]
                 }
             }'
         """,
@@ -160,7 +160,7 @@ void patchUpdateFileJSON(Map stageParams = [:]) {
     """
 }
 
-String extractResourcesFromBackup(Map stageParams = [:]) {
+String extractResourcesFromBackupDeployment(Map stageParams = [:]) {
     String backupFile = stageParams.backupFile
     String resourceName = stageParams.resourceName
     
