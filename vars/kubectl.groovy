@@ -59,9 +59,9 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
         script: """
             kubectl get hpa ${resourceName} -n ${namespace} -o=json | \
             jq '{
-                "spec": | {
-                    maxReplicas: .maxReplicas, 
-                    minReplicas: .minReplicas, 
+                "spec": (.spec | {
+                    maxReplicas, 
+                    minReplicas, 
                     metrics: [{
                         type: .metrics[0].type, 
                         resource: {
@@ -72,7 +72,7 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
                             }
                         }
                     }]
-                }
+                })
             }'
         """,
         returnStdout: true
