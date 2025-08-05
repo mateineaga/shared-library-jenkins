@@ -85,7 +85,7 @@ String getResources(Map params = [:]) {
     
     return sh( 
         script: """
-            kubectl get ${resources} -n ${namespace} -o=jsonpath="{range .items[*]}{.metadata.name}{\\"\\n\\"}"
+            kubectl get ${resources} -n ${namespace} -o=jsonpath='{range .items[*]}{.metadata.name}{\\"\\n\\"}'
         """,
         returnStdout: true
     ).trim()
