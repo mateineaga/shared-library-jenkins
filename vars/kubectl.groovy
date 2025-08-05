@@ -233,3 +233,41 @@ void revertResource(Map params = [:]) {
         error "No backup files found for ${resourceType}: ${resourceName}"
     }
 }
+
+String backupResource(Map params = [:]) {
+    String namespace = params.namespace ?: 'default'
+    String resourceName = params.resourceName
+    String resourceType = params.resourceType ?: 'deployment'
+    String backupPrefix = params.backupPrefix ?: 'backup'
+    String releaseVersion = params.releaseVersion
+    String serviceName = params.serviceName
+
+    echo "=== Starting backup for ${resourceType}: ${resourceName} ==="
+    
+    def timestamp = new Date().format('yyyyMMdd-HHmmss')
+    def backupFileName = "${backupPrefix}-${resourceName}-${timestamp}.json"
+    
+    def jsonResponse
+    
+    // Obține JSON response în funcție de tipul resursei
+    if (resourceType == 'deployment') {
+        jsonResponse = getPatchJsonResponseDeployment([
+            namespace: namespace,
+            resourceName: serviceName.replace("-svc","-dep"),
+            releaseVersion: releaseVersion
+        ])
+    } else if (resourceType == 'hpa') {
+        jsonResponse = getHPAPatchJsonResponse([
+            namespace: namespace,
+            resourceName: resourceName
+        ])
+    } else {
+        error "Unsupported resource type: ${resourceType}"
+    }
+    
+    if (!jsonResponse?.trim()) {
+        error "Failed to get JSON response for ${resourceType}: ${resourceName}"
+    }
+    
+    return [fileName: backupFileName, content: jsonResponse]
+}
