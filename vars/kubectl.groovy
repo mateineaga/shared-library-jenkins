@@ -184,3 +184,52 @@ String extractResourcesFromBackupDeployment(Map stageParams = [:]) {
         returnStdout: true
     ).trim()
 }
+
+void revertResource(Map params = [:]) {
+    String namespace = params.namespace ?: 'default'
+    String resourceName = params.resourceName
+    String resourceType = params.resourceType ?: 'deployment'
+    String jobName = params.jobName
+    String backupPrefix = params.backupPrefix ?: 'backup'
+
+    echo "=== Starting revert for ${resourceType}: ${resourceName} ==="
+    
+    // Construiește pattern-ul pentru backup
+    def artifactPattern = "${backupPrefix}-${resourceName}-*.json"
+    
+    // Copiază artefactele din build-ul anterior
+    copyArtifacts(
+        projectName: jobName,
+        selector: lastSuccessful(),
+        filter: artifactPattern
+    )
+    
+    // Găsește cel mai recent backup
+    def backupFile = sh(
+        script: "ls -1 ${artifactPattern} | head -1",
+        returnStdout: true
+    ).trim()
+    
+    if (backupFile) {
+        echo "Found backup file: ${backupFile}"
+        
+        // Citește conținutul backup-ului
+        def revertPatch = readFile(backupFile)
+        
+        // Creează fișierul de patch pentru revert
+        def revertFileName = "revert-${resourceName}.json"
+        writeFile file: revertFileName, text: revertPatch
+        
+        // Aplică patch-ul
+        patchUpdateFileJSON([
+            namespace: namespace,
+            resourceName: resourceName,
+            resourceType: resourceType,
+            patchFile: revertFileName
+        ])
+        
+        echo "Successfully reverted ${resourceType}: ${resourceName}"
+    } else {
+        error "No backup files found for ${resourceType}: ${resourceName}"
+    }
+}
