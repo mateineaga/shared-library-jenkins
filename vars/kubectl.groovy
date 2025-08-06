@@ -152,11 +152,10 @@ String filterResourcesByIdentifier(Map params = [:]) {
 String checkResourcesDeployment(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
-    String resourceType = stageParams.resourceType ?: 'deployment'
 
     return sh( 
         script: """
-        kubectl get ${resourceType} ${resourceName} -n ${namespace} -o=jsonpath='{.spec.template.spec.containers[0].resources}' | jq '.'
+        kubectl get deployment ${resourceName} -n ${namespace} -o=jsonpath='{.spec.template.spec.containers[0].resources}' | jq '.'
         """,
         returnStdout: true
     ).trim()
@@ -165,7 +164,6 @@ String checkResourcesDeployment(Map stageParams = [:]) {
 String checkResourcesHPA(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
-    String resourceType = stageParams.resourceType ?: 'deployment'
 
     return sh( 
         script: """
