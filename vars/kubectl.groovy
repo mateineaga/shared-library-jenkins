@@ -38,12 +38,17 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
             error "No resources defined in values file"
         }
 
+        // Extrage numele de bază din deployment (ex: "asm-graphql" din "asm-graphql-dep-1-2-3")
+        def containerName = stageParams.deployment.replaceAll("-dep-[0-9.-]+\$", "")
+        echo "Extracted container name: ${containerName}"
+
         def jsonString = """
             {
                 "spec": {
                     "template": {
                         "spec": {
                             "containers": [{
+                                "name": "${containerName}",
                                 "resources": {   
                                     "limits": {
                                         "cpu": "${resources.limits.cpu}",
