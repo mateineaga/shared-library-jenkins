@@ -23,41 +23,55 @@ String getReleaseVersion(Map stageParams = [:]) {
 
 
 String getPatchJsonResponseDeployment(Map stageParams = [:]) {
-    String namespace    = stageParams.namespace    ?: 'default'
-    String resourceName = stageParams.resourceName
+    if (!stageParams.valuesFile) {
+        error "valuesFile is required"
+    }
 
-    def jsonResult = sh( 
-        script: """#!/bin/bash
-        kubectl get deployment -n ${namespace} ${resourceName} -o=json | 
-            jq '{
+    def deployments = []
+    try {
+        // Citește values file
+        def valuesContent = readYaml file: stageParams.valuesFile
+        
+        // Preia resursele din values file
+        def resources = valuesContent.resources
+        if (!resources) {
+            error "No resources defined in values file"
+        }
+
+        // Pentru fiecare deployment din array
+        stageParams.deployments.split('\n').each { deployment ->
+            def jsonString = """
+            {
                 "spec": {
                     "template": {
                         "spec": {
                             "containers": [{
-                                "image": .spec.template.spec.containers[0].image,
-                                "name": .spec.template.spec.containers[0].name,
                                 "resources": {   
                                     "limits": {
-                                        "cpu": .spec.template.spec.containers[0].resources.limits.cpu,
-                                        "ephemeral-storage": .spec.template.spec.containers[0].resources.limits["ephemeral-storage"],
-                                        "memory": .spec.template.spec.containers[0].resources.limits.memory
+                                        "cpu": "${resources.limits.cpu}",
+                                        "ephemeral-storage": "${resources.limits.'ephemeral-storage'}",
+                                        "memory": "${resources.limits.memory}"
                                     },
                                     "requests": {
-                                        "cpu": .spec.template.spec.containers[0].resources.requests.cpu,
-                                        "ephemeral-storage": .spec.template.spec.containers[0].resources.requests["ephemeral-storage"],
-                                        "memory": .spec.template.spec.containers[0].resources.requests.memory
+                                        "cpu": "${resources.requests.cpu}",
+                                        "ephemeral-storage": "${resources.requests.'ephemeral-storage'}",
+                                        "memory": "${resources.requests.memory}"
                                     }
                                 }
                             }]
                         }
                     }
                 }
-            }'
-        """,
-        returnStdout: true
-    ).trim()
+            }
+            """
+            deployments.add(jsonString.trim())
+        }
 
-    return jsonResult
+        return deployments.join('\n')
+
+    } catch (Exception e) {
+        error "Failed to generate patch configuration: ${e.message}"
+    }
 }
 
 String getHPAPatchJsonResponse(Map stageParams = [:]) {
