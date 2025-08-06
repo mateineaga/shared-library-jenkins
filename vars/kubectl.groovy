@@ -125,9 +125,21 @@ String filterResourcesByIdentifier(Map params = [:]) {
     String resources = params.resources
     String identifier = params.identifier
     
-    return resources.split('\n')
-        .findAll { it.contains(identifier) }
-        .join('\n')
+    if (!resources) {
+        return ""
+    }
+
+    def filteredResources = []
+    
+    resources.split('\n').each { resource ->
+        if (resource.trim()) {  // Skip empty lines
+            if (resource.contains(identifier)) {
+                filteredResources.add(resource.trim())
+            }
+        }
+    }
+
+    return filteredResources.join('\n')
 }
 
 
