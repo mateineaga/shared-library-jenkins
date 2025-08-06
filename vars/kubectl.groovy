@@ -27,20 +27,18 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
         error "valuesFile is required"
     }
 
-    def deployments = []
     try {
         // Citește values file
         def valuesContent = readYaml file: stageParams.valuesFile
         
         // Preia resursele din values file
         def resources = valuesContent.resources
+
         if (!resources) {
             error "No resources defined in values file"
         }
 
-        // Pentru fiecare deployment din array
-        stageParams.deployments.split('\n').each { deployment ->
-            def jsonString = """
+        def jsonString = """
             {
                 "spec": {
                     "template": {
@@ -49,12 +47,10 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
                                 "resources": {   
                                     "limits": {
                                         "cpu": "${resources.limits.cpu}",
-                                        "ephemeral-storage": "${resources.limits.'ephemeral-storage'}",
                                         "memory": "${resources.limits.memory}"
                                     },
                                     "requests": {
                                         "cpu": "${resources.requests.cpu}",
-                                        "ephemeral-storage": "${resources.requests.'ephemeral-storage'}",
                                         "memory": "${resources.requests.memory}"
                                     }
                                 }
@@ -64,10 +60,9 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
                 }
             }
             """
-            deployments.add(jsonString.trim())
-        }
 
-        return deployments.join('\n')
+
+        return jsonString
 
     } catch (Exception e) {
         error "Failed to generate patch configuration: ${e.message}"
@@ -75,32 +70,44 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
 }
 
 String getHPAPatchJsonResponse(Map stageParams = [:]) {
-    String namespace    = stageParams.namespace    ?: 'default'
-    String resourceName = stageParams.resourceName
-    
-    return sh( 
-        script: """
-            kubectl get hpa ${resourceName} -n ${namespace} -o=json | \
-            jq '{
-                "spec": (.spec | {
-                    maxReplicas, 
-                    minReplicas, 
-                    metrics: [{
-                        type: .metrics[0].type, 
-                        resource: {
-                            name: .metrics[0].resource.name, 
-                            target: {
-                                type: .metrics[0].resource.target.type, 
-                                averageUtilization: .metrics[0].resource.target.averageUtilization
+    if (!stageParams.valuesFile) {
+        error "valuesFile is required"
+    }
+
+    try {
+        def valuesContent = readYaml file: stageParams.valuesFile
+        def resources = valuesContent.hpa
+
+        if (!resources) {
+            error "No HPA resources defined in values file"
+        }
+
+        def jsonString = """
+            {
+                "spec": {
+                    "maxReplicas": ${resources.pods.max},
+                    "minReplicas": ${resources.pods.min},
+                    "metrics": [{
+                        "type": "Resource",
+                        "resource": {
+                            "name": "cpu",
+                            "target": {
+                                "type": "Utilization",
+                                "averageUtilization": ${resources.metrics.cpu}
                             }
                         }
                     }]
-                })
-            }'
-        """,
-        returnStdout: true
-    ).trim()
+                }
+            }
+        """
+
+        return jsonString.trim()
+
+    } catch (Exception e) {
+        error "Failed to generate patch configuration: ${e.message}"
+    }
 }
+    
 
 String getResources(Map params = [:]) {
     String resources = params.resources
