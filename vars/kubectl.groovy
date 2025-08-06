@@ -2,24 +2,33 @@ String getReleaseVersion(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
     String resourceType = stageParams.resourceType ?: 'dr'
+    String release       = stageParams.release 
 
-    return sh(
-        script: """
-            kubectl get ${resourceType} -n ${namespace} ${resourceName} -o=jsonpath="{.spec.subsets[?(@.name=='release')].labels.app\\.kubernetes\\.io/version}" | sed 's/\\./\\-/g'
-        """,
-        returnStdout: true
-    ).trim()
+    if (release == true ){
+        return sh(
+            script: """
+                kubectl get dr -n ${namespace} ${resourceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='release')].labels.app\\.kubernetes\\.io/version}"
+            """,
+            returnStdout: true
+        ).trim()
+    } else {
+        return sh(
+            script: """
+                kubectl get dr -n ${namespace} ${resourceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='candidate')].labels.app\\.kubernetes\\.io/version}"
+            """,
+            returnStdout: true
+        ).trim()
+    }
 }
 
 
 String getPatchJsonResponseDeployment(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
-    String releaseVersion = stageParams.releaseVersion 
 
     def jsonResult = sh( 
         script: """#!/bin/bash
-        kubectl get deployment -n ${namespace} ${resourceName}-${releaseVersion} -o=json | 
+        kubectl get deployment -n ${namespace} ${resourceName} -o=json | 
             jq '{
                 "spec": {
                     "template": {
