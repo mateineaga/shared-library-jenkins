@@ -124,22 +124,37 @@ String getResources(Map params = [:]) {
 String filterResourcesByIdentifier(Map params = [:]) {
     String resources = params.resources
     String identifier = params.identifier
+
+    echo "Starting filtering process..."
+    echo "Resources received: [${resources}]"
+    echo "Identifier to filter by: [${identifier}]"
     
     if (!resources) {
+        echo "No resources to filter!"
         return ""
     }
 
     def filteredResources = []
+    def resourcesList = resources.split('\n')
     
-    resources.split('\n').each { resource ->
-        if (resource.trim()) {  // Skip empty lines
+    echo "Split resources into ${resourcesList.size()} items"
+    
+    resourcesList.each { resource ->
+        echo "Checking resource: [${resource}]"
+        if (resource.trim()) {
+            echo "Resource after trim: [${resource.trim()}]"
             if (resource.contains(identifier)) {
+                echo "Found match!"
                 filteredResources.add(resource.trim())
             }
         }
     }
 
-    return filteredResources.join('\n')
+    echo "Found ${filteredResources.size()} matching resources"
+    def result = filteredResources.join('\n')
+    echo "Final result: [${result}]"
+    
+    return result
 }
 
 
