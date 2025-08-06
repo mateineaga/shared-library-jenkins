@@ -4,17 +4,17 @@ String getReleaseVersion(Map stageParams = [:]) {
     String resourceType = stageParams.resourceType ?: 'dr'
     String release       = stageParams.release 
 
-    if (release == true ){
+    if (release.toString().toBoolean()){
         return sh(
             script: """
-                kubectl get dr -n ${namespace} ${resourceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='release')].labels.app\\.kubernetes\\.io/version}"
+                kubectl get dr -n ${namespace} ${resourceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='release')].labels.app\\.kubernetes\\.io/version}" | sed 's/\\./\\-/g'
             """,
             returnStdout: true
         ).trim()
     } else {
         return sh(
             script: """
-                kubectl get dr -n ${namespace} ${resourceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='candidate')].labels.app\\.kubernetes\\.io/version}"
+                kubectl get dr -n ${namespace} ${resourceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='candidate')].labels.app\\.kubernetes\\.io/version}" | sed 's/\\./\\-/g'
             """,
             returnStdout: true
         ).trim()
@@ -123,11 +123,11 @@ String getResources(Map params = [:]) {
 
 String filterResourcesByIdentifier(Map params = [:]) {
     String resources = params.resources
-    String identifier = params.identifier
+    String identifier = params.identifier?.replaceAll("\\.", "-")
 
-    echo "Starting filtering process..."
-    echo "Resources received: [${resources}]"
-    echo "Identifier to filter by: [${identifier}]"
+    // echo "Starting filtering process..."
+    // echo "Resources received: [${resources}]"
+    // echo "Identifier to filter by: [${identifier}]"
     
     if (!resources) {
         echo "No resources to filter!"
@@ -137,22 +137,22 @@ String filterResourcesByIdentifier(Map params = [:]) {
     def filteredResources = []
     def resourcesList = resources.split('\n')
     
-    echo "Split resources into ${resourcesList.size()} items"
+    // echo "Split resources into ${resourcesList.size()} items"
     
     resourcesList.each { resource ->
         echo "Checking resource: [${resource}]"
         if (resource.trim()) {
-            echo "Resource after trim: [${resource.trim()}]"
+            // echo "Resource after trim: [${resource.trim()}]"
             if (resource.contains(identifier)) {
-                echo "Found match!"
+                // echo "Found match!"
                 filteredResources.add(resource.trim())
             }
         }
     }
 
-    echo "Found ${filteredResources.size()} matching resources"
+    // echo "Found ${filteredResources.size()} matching resources"
     def result = filteredResources.join('\n')
-    echo "Final result: [${result}]"
+    // echo "Final result: [${result}]"
     
     return result
 }
