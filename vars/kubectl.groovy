@@ -65,7 +65,7 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
         return jsonString
 
     } catch (Exception e) {
-        error "Failed to generate patch configuration: ${e.message}"
+        error "No patch genereated: ${e.message}"
     }
 }
 
@@ -104,7 +104,7 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
         return jsonString.trim()
 
     } catch (Exception e) {
-        error "Failed to generate patch configuration: ${e.message}"
+        error "No patch generated: ${e.message}"
     }
 }
     
