@@ -49,7 +49,7 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
                         "spec": {
                             "containers": [{
                                 "name": "${containerName}",
-                                "image": "${stageParams.imageContainer}"
+                                "image": "${stageParams.imageContainer}",
                                 "resources": {   
                                     "limits": {
                                         "cpu": "${resources.limits.cpu}",
