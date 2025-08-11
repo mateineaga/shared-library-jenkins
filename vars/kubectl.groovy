@@ -2,19 +2,21 @@ String getReleaseVersion(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
     String resourceType = stageParams.resourceType ?: 'dr'
-    String release       = stageParams.release 
+    String release     = stageParams.release 
+
+    String serviceName = resourceName == 'bloomreach' ? 'bloomreach-authoring' : resourceName
 
     if (release.toString().toBoolean()){
         return sh(
             script: """
-                kubectl get dr -n ${namespace} ${resourceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='release')].labels.app\\.kubernetes\\.io/version}" | sed 's/\\./\\-/g'
+                kubectl get dr -n ${namespace} ${serviceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='release')].labels.app\\.kubernetes\\.io/version}" | sed 's/\\./\\-/g'
             """,
             returnStdout: true
         ).trim()
     } else {
         return sh(
             script: """
-                kubectl get dr -n ${namespace} ${resourceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='candidate')].labels.app\\.kubernetes\\.io/version}" | sed 's/\\./\\-/g'
+                kubectl get dr -n ${namespace} ${serviceName}-svc -o=jsonpath="{.spec.subsets[?(@.name=='candidate')].labels.app\\.kubernetes\\.io/version}" | sed 's/\\./\\-/g'
             """,
             returnStdout: true
         ).trim()
@@ -28,18 +30,20 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
     }
 
     try {
-        // Citește values file
         def valuesContent = readYaml file: stageParams.valuesFile
-        
-        // Preia resursele din values file
         def resources = valuesContent.resources
 
         if (!resources) {
             error "No resources defined in values file"
         }
 
-        // Extrage numele de bază din deployment (ex: "asm-graphql" din "asm-graphql-dep-1-2-3")
-        def containerName = stageParams.deployment.replaceAll("-dep-[0-9.-]+\$", "")
+        def containerName
+        if (stageParams.deployment.startsWith("bloomreach-")) {
+            containerName = "bloomreach"
+        } else {
+            containerName = stageParams.deployment.replaceAll("-dep-[0-9.-]+\$", "")
+        }
+        
         echo "Extracted container name: ${containerName}"
 
         def jsonString = """
@@ -66,7 +70,6 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
                 }
             }
             """
-
 
         return jsonString
 
@@ -115,13 +118,16 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
 }
     
 
-String getResources(Map params = [:]) {
-    String resources = params.resources
-    String namespace = params.namespace ?: 'default'
-    
+String get(Map stageParams = [:]) {
+    String resources = stageParams.resources
+    String namespace = stageParams.namespace ?: 'default'
+    String options      = stageParams.options      ?: ''
+
+    options             = options.replaceAll('(\\r\\n|\\n|\\s\\s)+', ' ')
+
     return sh( 
         script: """
-            kubectl get ${resources} -n ${namespace} -o=jsonpath="{range .items[*]}{.metadata.name}{\\"\\n\\"}"
+            kubectl get ${resources} -n ${namespace} ${options}
         """,
         returnStdout: true
     ).trim()
@@ -141,9 +147,7 @@ String filterResourcesByIdentifier(Map params = [:]) {
     
     resourcesList.each { resource ->
         if (resource.trim()) {
-            // echo "Resource after trim: [${resource.trim()}]"
             if (resource.contains(identifier)) {
-                // echo "Found match!"
                 filteredResources.add(resource.trim())
             }
         }
@@ -155,33 +159,26 @@ String filterResourcesByIdentifier(Map params = [:]) {
 }
 
 
-String checkResourcesDeployment(Map stageParams = [:]) {
+String checkResources(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String resourceName = stageParams.resourceName
+    String resourceType = stageParams.resourceType
+    String options      = stageParams.options      ?: ''
+
+    options             = options.replaceAll('(\\r\\n|\\n|\\s\\s)+', ' ')
+
+
 
     return sh( 
         script: """
-        kubectl get deployment ${resourceName} -n ${namespace} -o=jsonpath='{.spec.template.spec.containers[0].resources}' | jq '.'
-        """,
-        returnStdout: true
-    ).trim()
-}
-
-String checkResourcesHPA(Map stageParams = [:]) {
-    String namespace    = stageParams.namespace    ?: 'default'
-    String resourceName = stageParams.resourceName
-
-    return sh( 
-        script: """
-        kubectl get hpa ${resourceName} -n ${namespace} -o=jsonpath='{.spec}' | jq '.'
+        kubectl get ${resourceType} ${resourceName} -n ${namespace} ${options}
         """,
         returnStdout: true
     ).trim()
 }
 
 
-
-void patchUpdateFileJSON(Map stageParams = [:]) {
+void patchUpdateFile(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
     String options      = stageParams.options      ?: ''
     String patchFile    = stageParams.patchFile

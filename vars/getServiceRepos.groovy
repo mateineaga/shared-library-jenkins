@@ -10,12 +10,7 @@ def call() {
             branch: 'develop',
             path: 'pipeline/store-service'
         ],
-        'bloomreach-authoring': [
-            url: 'https://github.com/RoyalAholdDelhaize/eu-digital-bloomreach-cms',
-            branch: 'develop',
-            path: 'pipeline/bloomreach-service'
-        ],
-        'bloomreach-delivery': [
+        'bloomreach': [
             url: 'https://github.com/RoyalAholdDelhaize/eu-digital-bloomreach-cms',
             branch: 'develop',
             path: 'pipeline/bloomreach-service'
