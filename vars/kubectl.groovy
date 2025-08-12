@@ -57,13 +57,18 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
                 resourcesJson.limits = [:]
                 if (resources.limits.memory) resourcesJson.limits.memory = resources.limits.memory
                 if (resources.limits.cpu) resourcesJson.limits.cpu = resources.limits.cpu
-                if (resources.limits.ephemeralStorage) resourcesJson.limits.ephemeralStorage = resources.limits.ephemeralStorage
+                if (resources.limits.ephemeralStorage) {
+                    resourcesJson.limits['ephemeral-storage'] = resources.limits.ephemeralStorage
+                }
             }
             
             if (resources.requests) {
                 resourcesJson.requests = [:]
                 if (resources.requests.memory) resourcesJson.requests.memory = resources.requests.memory
                 if (resources.requests.cpu) resourcesJson.requests.cpu = resources.requests.cpu
+                if (resources.requests.ephemeralStorage) {
+                    resourcesJson.requests['ephemeral-storage'] = resources.requests.ephemeralStorage
+                }
             }
 
             def jsonString = """
