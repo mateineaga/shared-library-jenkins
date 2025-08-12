@@ -96,6 +96,23 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
                 error "No resources defined in values file for ${stageParams.deployment}"
             }
 
+            // Construiește JSON-ul doar cu valorile care există
+            def resourcesJson = [:]
+            
+            // Adaugă limits doar dacă există
+            if (resources.limits) {
+                resourcesJson.limits = [:]
+                if (resources.limits.cpu) resourcesJson.limits.cpu = resources.limits.cpu
+                if (resources.limits.memory) resourcesJson.limits.memory = resources.limits.memory
+            }
+            
+            // Adaugă requests doar dacă există
+            if (resources.requests) {
+                resourcesJson.requests = [:]
+                if (resources.requests.cpu) resourcesJson.requests.cpu = resources.requests.cpu
+                if (resources.requests.memory) resourcesJson.requests.memory = resources.requests.memory
+            }
+
             def jsonString = """
                 {
                     "spec": {
@@ -104,16 +121,7 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
                                 "containers": [{
                                     "name": "${containerName}",
                                     "image": "${stageParams.imageContainer}",
-                                    "resources": {   
-                                        "limits": {
-                                            "cpu": "${resources.limits.cpu}",
-                                            "memory": "${resources.limits.memory}"
-                                        },
-                                        "requests": {
-                                            "cpu": "${resources.requests.cpu}",
-                                            "memory": "${resources.requests.memory}"
-                                        }
-                                    }
+                                    "resources": ${groovy.json.JsonOutput.toJson(resourcesJson)}
                                 }]
                             }
                         }
