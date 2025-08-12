@@ -14,11 +14,6 @@ def call() {
             url: 'https://github.com/RoyalAholdDelhaize/eu-digital-bloomreach-cms',
             branch: 'develop',
             path: 'pipeline/bloomreach-service'
-        ],
-        'hybris': [
-            url: 'https://github.com/RoyalAholdDelhaize/eu-digital-hybris',
-            branch: 'develop',
-            path: 'pipeline/hybris-k8s/hybris-app'
         ]
     ]
 }

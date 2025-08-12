@@ -214,7 +214,7 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
 }
     
 
-String get(Map stageParams = [:]) {
+String getResource(Map stageParams = [:]) {
     String resources = stageParams.resources
     String namespace = stageParams.namespace ?: 'default'
     String options      = stageParams.options      ?: ''
@@ -253,26 +253,6 @@ String filterResourcesByIdentifier(Map params = [:]) {
     
     return result
 }
-
-
-String checkResources(Map stageParams = [:]) {
-    String namespace    = stageParams.namespace    ?: 'default'
-    String resourceName = stageParams.resourceName
-    String resourceType = stageParams.resourceType
-    String options      = stageParams.options      ?: ''
-
-    options             = options.replaceAll('(\\r\\n|\\n|\\s\\s)+', ' ')
-
-
-
-    return sh( 
-        script: """
-        kubectl get ${resourceType} ${resourceName} -n ${namespace} ${options}
-        """,
-        returnStdout: true
-    ).trim()
-}
-
 
 void patchUpdateFile(Map stageParams = [:]) {
     String namespace    = stageParams.namespace    ?: 'default'
