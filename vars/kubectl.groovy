@@ -173,7 +173,8 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
             // Pentru alte servicii
             resources = valuesContent.hpa
             if (!resources) {
-                error "No HPA resources defined in values file for ${stageParams.resourceName}"
+                echo "No HPA resources defined in values file for ${stageParams.resourceName}"
+                return null
             }
         }
 
