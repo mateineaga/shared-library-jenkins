@@ -43,7 +43,9 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
             if (stageParams.deployment.contains("authoring")) {
                 resources = valuesContent.authoring.resources
             } else {
-                resources = valuesContent.delivery.resources
+                echo "Delivery deployment - skipping resources patch"
+                return null
+            }
         } else {
             containerName = stageParams.deployment.replaceAll("-dep-[0-9.-]+\$", "")
             resources = valuesContent.resources
