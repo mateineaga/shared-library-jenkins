@@ -44,6 +44,7 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
                 }
             } else {
                 resources = valuesContent.delivery.resources
+                
                 if (!resources) {
                     echo "No resources defined in values file for delivery - skipping resources patch"
                     return null
@@ -136,13 +137,20 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
             // Pentru bloomreach, verifică dacă este authoring sau delivery
             if (stageParams.resourceName.contains("authoring")) {
                 resources = valuesContent.authoring.hpa
+                if (!resources && valuesContent.bloomreach?.authoring?.hpa) {
+                    // Verifică structura alternativă pentru authoring
+                    resources = valuesContent.bloomreach.authoring.hpa
+                }
                 if (!resources) {
-                    // Dacă authoring nu are HPA configurat
                     echo "No HPA configuration found for authoring - skipping patch"
                     return null
                 }
             } else {
                 resources = valuesContent.delivery.hpa
+                if (!resources && valuesContent.bloomreach?.delivery?.hpa) {
+                    // Verifică structura alternativă pentru delivery
+                    resources = valuesContent.bloomreach.delivery.hpa
+                }
                 if (!resources) {
                     echo "No HPA configuration found for delivery - skipping patch"
                     return null
