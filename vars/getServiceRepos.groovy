@@ -1,11 +1,11 @@
 def call() {
     return [
-        graphql: [
+        'graphql': [
             url: 'https://github.com/RoyalAholdDelhaize/eu-digital-graphql',
             branch: 'develop',
             path: 'pipeline/graphql-service'
         ],
-        store: [
+        'store': [
             url: 'https://github.com/RoyalAholdDelhaize/eu-digital-fe-stores',
             branch: 'develop',
             path: 'pipeline/store-service'
@@ -15,10 +15,10 @@ def call() {
             branch: 'develop',
             path: 'pipeline/bloomreach-service'
         ],
-        hybris: [
+        'hybris': [
             url: 'https://github.com/RoyalAholdDelhaize/eu-digital-hybris',
             branch: 'develop',
-            path: 'pipeline/hybris-service'
+            path: 'pipeline/hybris-k8s/hybris-app'
         ]
     ]
 }
