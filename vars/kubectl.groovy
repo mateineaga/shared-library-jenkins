@@ -40,8 +40,13 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
         def containerName
         if (stageParams.deployment.startsWith("bloomreach-")) {
             containerName = "bloomreach"
+            if (stageParams.deployment.contains("authoring")) {
+                resources = valuesContent.authoring.resources
+            } else {
+                resources = valuesContent.delivery.resources
         } else {
             containerName = stageParams.deployment.replaceAll("-dep-[0-9.-]+\$", "")
+            resources = valuesContent.resources
         }
         
         echo "Extracted container name: ${containerName}"
@@ -85,10 +90,20 @@ String getHPAPatchJsonResponse(Map stageParams = [:]) {
 
     try {
         def valuesContent = readYaml file: stageParams.valuesFile
-        def resources = valuesContent.hpa
+        def resources
+
+        if (stageParams.resourceName?.contains("bloomreach-")) {
+            if (stageParams.resourceName.contains("authoring")) {
+                resources = valuesContent.authoring.hpa
+            } else {
+                resources = valuesContent.delivery.hpa
+            }
+        } else {
+            resources = valuesContent.hpa
+        }
 
         if (!resources) {
-            error "No HPA resources defined in values file"
+            error "No HPA resources defined in values file for ${stageParams.resourceName}"
         }
 
         def jsonString = """
@@ -134,7 +149,7 @@ String get(Map stageParams = [:]) {
 }
 
 String filterResourcesByIdentifier(Map params = [:]) {
-    String resources = params.resources
+    String resources = params.resources?.trim()
     String identifier = params.identifier?.replaceAll("\\.", "-")
 
     if (!resources) {
@@ -153,7 +168,7 @@ String filterResourcesByIdentifier(Map params = [:]) {
         }
     }
 
-    def result = filteredResources.join('\n')
+    def result = filteredResources.join('\n').trim()
     
     return result
 }
