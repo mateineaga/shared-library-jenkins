@@ -40,7 +40,8 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
             if (stageParams.deployment.contains("authoring")) {
                 resources = valuesContent.authoring.resources
                 if (!resources) {
-                    error "No resources defined in values file for authoring"
+                    echo "No resources defined in values file for authoring"
+                    return null
                 }
             } else {
                 resources = valuesContent.delivery.resources
@@ -93,7 +94,8 @@ String getPatchJsonResponseDeployment(Map stageParams = [:]) {
             containerName = stageParams.deployment.replaceAll("-dep-[0-9.-]+\$", "")
             resources = valuesContent.resources
             if (!resources) {
-                error "No resources defined in values file for ${stageParams.deployment}"
+                echo "No resources defined in values file for ${stageParams.deployment}"
+                return null
             }
 
             // Construiește JSON-ul doar cu valorile care există
